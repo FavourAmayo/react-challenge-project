@@ -18,7 +18,7 @@ class LoginForm extends Component {
     password: "",
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if(nextProps.auth.token) {this.props.onLogin()};
   }
 
