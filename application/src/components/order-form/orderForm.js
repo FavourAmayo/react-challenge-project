@@ -4,23 +4,40 @@ import { connect } from 'react-redux';
 import { SERVER_IP } from '../../private';
 import './orderForm.css';
 
-const ADD_ORDER_URL = `${SERVER_IP}/api/add-order`
+const ADD_ORDER_URL = `${SERVER_IP}/api/add-order`;
+const GET_CURRENT_ORDER = (id) =>`${SERVER_IP}/api/current-orders`;
+const EDIT_ORDER = `${SERVER_IP}/api/edit-order`;
+
 
 const mapStateToProps = (state) => ({
     auth: state.auth,
-})
+});
 
 class OrderForm extends Component {
     constructor(props) {
         super(props);
         this.state = {
             order_item: "",
-            quantity: "1"
+            quantity: "1",
+            form_label: (!props.match.params.id) ? "I'd like to order..." : "I'd like to change something...",
+            id: props.match.params.id || ""
         }
     }
 
+    componentDidMount() {
+        if (!!this.state.id) {
+          fetch(GET_CURRENT_ORDER(this.state.id)).then(async res => {
+              const body = await res.json();
+              this.setState({
+                order_item: body.order_item,
+                quantity: body.quantity
+              });
+          });
+        }
+      }
+
     menuItemChosen(event) {
-        this.setState({ item: event.target.value });
+        this.setState({ order_item: event.target.value });
     }
 
     menuQuantityChosen(event) {
@@ -30,9 +47,11 @@ class OrderForm extends Component {
     submitOrder(event) {
         event.preventDefault();
         if (this.state.order_item === "") return;
-        fetch(ADD_ORDER_URL, {
+        const URL_REQUEST = (!!this.state.id) ? EDIT_ORDER : ADD_ORDER_URL;
+        fetch(URL_REQUEST, {
             method: 'POST',
             body: JSON.stringify({
+                id: this.state.id,
                 order_item: this.state.order_item,
                 quantity: this.state.quantity,
                 ordered_by: this.props.auth.email || 'Unknown!',
@@ -51,7 +70,7 @@ class OrderForm extends Component {
             <Template>
                 <div className="form-wrapper">
                     <form>
-                        <label className="form-label">I'd like to order...</label><br />
+                        <label className="form-label">{this.state.form_label}</label><br />
                         <select 
                             value={this.state.order_item} 
                             onChange={(event) => this.menuItemChosen(event)}
